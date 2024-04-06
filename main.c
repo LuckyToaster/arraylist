@@ -4,9 +4,11 @@
 #include <string.h>
 #include <stdint.h>
 
+#define NAME_LEN 50
+
 typedef struct {
-    size_t id;
-    const char* msg; 
+    size_t phone_num;
+    char name[NAME_LEN];
 } contact;
 
 typedef struct {
@@ -15,17 +17,21 @@ typedef struct {
     size_t idx;
 } arraylist;
 
-void check_null_ptr(void* ptr, const char* func_name, const char* operation);
-contact* new_contact(int id, const char* msg);
-void print_list(arraylist* list);
+
+
+contact* new_contact(int id, char* name);
+void free_contact(contact* c);
 
 arraylist new_arraylist(int initial_size);
 void free_arraylist(arraylist* list);
+void print_list(arraylist* list);
 bool push(arraylist* list, contact* c);
 bool pop(arraylist* list);
-bool remove_idx(arraylist* list, size_t idx);
+bool remove_idx(arraylist* list, size_t idx);   // Inserts and removes are constly for arraylists as they take O(n)
 contact* get(arraylist* list, size_t idx);
-int search(arraylist* arr, const char* name); // returns the index, or -1 if not found
+int64_t search(arraylist* arr, char* name);     // returns the index, or -1 if not found
+
+void check_null_ptr(void* ptr, char* func_name, char* operation); // helper function
 
 
 int main() {
@@ -59,8 +65,8 @@ int main() {
 
     print_list(&list);
 
-    printf("Searching for 'you' (nohomo) returns: %d\n", search(&list, "you"));
-    printf("Searching for 'nonexistent_name' returns: %d\n", search(&list, "nonexistent_name"));
+    printf("Searching for 'you' (nohomo) returns: %ld\n", search(&list, "you"));
+    printf("Searching for 'nonexistent_name' returns: %ld\n", search(&list, "nonexistent_name"));
 
     free_arraylist(&list);  
 }
@@ -70,24 +76,42 @@ int main() {
 // IMPLEMENTATION
 // ==============
 
-void check_null_ptr(void* ptr, const char* func_name, const char* operation) {
-    if (ptr == NULL) {
-        fprintf(stderr, "%s: %s fail, exitting 'gracefully'\n", func_name, operation);
-        exit(EXIT_FAILURE);
-    }
-}
-
-
-contact* new_contact(int id, const char* msg) {
+contact* new_contact(int phone_num, char* name) {
     contact* c = (contact*) malloc(sizeof(contact));
     check_null_ptr(c, "new_contact", "malloc");
-    c->id = id;
-    c->msg = msg;
+    c->phone_num = phone_num;
+    strcpy(c->name, name);
+    
     return c;
 }
 
+void free_contact(contact* c) {
+    free(c);
+    c = NULL; // free(NULL) has no effect and is safe, this protects in case we double free 'c'
+}
 
-// mutates the value of the arraylist.arr pointer
+
+arraylist new_arraylist(int size) {
+    arraylist list;
+    list.size = size;
+    list.idx = 0;
+    list.arr = (contact**) malloc(sizeof(contact*) * size);
+    check_null_ptr(list.arr, "new_arraylist_stack", "malloc");
+
+    for (int i = 0; i < size; i++) 
+        list.arr[i] = (contact*) malloc(sizeof(contact));
+         
+    return list;
+}
+
+
+void free_arraylist(arraylist* list) {
+    for (size_t i = 0; i < list->idx; i++) 
+        free_contact(list->arr[i]);
+    free(list->arr);
+}
+
+
 bool push(arraylist* list, contact* c) {
     if (list->size == list->idx - 1) {
         int newsize = list->size * 2;
@@ -105,7 +129,7 @@ bool push(arraylist* list, contact* c) {
 bool pop(arraylist* list) {
     if (list->size == 0 || list->idx == 0) return false;
 
-    free(list->arr[list->idx]); // free the last element
+    free_contact(list->arr[list->idx]); 
     list->idx--;
 
     if (list->idx < list->size / 2) {
@@ -117,10 +141,6 @@ bool pop(arraylist* list) {
 }
 
 
-/* 
- * This is a costly operation, inserts and removes take O(n)
- * linked list will have constant time complexity for inserts and removes, consider using it instead
-*/
 bool remove_idx(arraylist* list, size_t idx) {
     if (list->idx < idx) {
         printf("remove from arraylist: index %ld out of bounds\n", idx);
@@ -135,6 +155,7 @@ bool remove_idx(arraylist* list, size_t idx) {
     contact** buff = (contact**) malloc(sizeof(contact) * list->idx - 1); 
     check_null_ptr(buff, "remove_idx", "malloc");
 
+    // copy list->arr into buff, except for idx
     size_t buff_idx = 0, arr_idx = 0;
     while (arr_idx < list->idx) {
         if (arr_idx == idx) {
@@ -146,9 +167,9 @@ bool remove_idx(arraylist* list, size_t idx) {
         buff_idx++;
     }
 
-    free(list->arr[idx]);   // free the element 
+    free_contact(list->arr[idx]);   
     free(list->arr);        // free the dynamic array of pointers 
-    list->arr = buff;       // assign list->arr to newarr
+    list->arr = buff;       // assign buff to list->arr
     list->idx--;
     
     return true;
@@ -164,9 +185,9 @@ contact* get(arraylist* list, size_t idx) {
 }
 
 
-int search(arraylist* list, const char* name) {
+int64_t search(arraylist* list, char* name) {
     for (size_t i = 0; i < list->idx; i++)
-        if (strcmp(name, list->arr[i]->msg) == 0)
+        if (strcmp(name, list->arr[i]->name) == 0)
             return (int) i;
     return -1;
 }
@@ -174,30 +195,13 @@ int search(arraylist* list, const char* name) {
 
 void print_list(arraylist* list) {
     for (size_t i = 0; i < list->idx; i++) // use idx as list.length 
-        printf("%ld, %s\n", list->arr[i]->id, list->arr[i]->msg);
+        printf("%ld, %s\n", list->arr[i]->phone_num, list->arr[i]->name);
 }
 
 
-/*
-*   Makes arraylist on stack, returns arraylist struct by value
-*/
-arraylist new_arraylist(int size) {
-    arraylist list;
-    list.size = size;
-    list.idx = 0;
-    //list.arr = (contact**) malloc(sizeof(contact) * size); THIS WAS WRONG BUT PRODUCED NO ERRORS
-    list.arr = (contact**) malloc(sizeof(contact*) * size);
-    check_null_ptr(list.arr, "new_arraylist_stack", "malloc");
-
-    for (int i = 0; i < size; i++) 
-        list.arr[i] = (contact*) malloc(sizeof(contact));
-         
-    return list;
+void check_null_ptr(void* ptr, char* func_name, char* operation) {
+    if (ptr == NULL) {
+        fprintf(stderr, "%s: %s fail, exitting 'gracefully'\n", func_name, operation);
+        exit(EXIT_FAILURE);
+    }
 }
-
-
-void free_arraylist(arraylist* list) {
-    for (size_t i = 0; i < list->idx; i++) free(list->arr[i]);
-    free(list->arr);
-}
-
