@@ -1,8 +1,8 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdint.h>
+#include <stdlib.h>     // malloc realloc
+#include <stdio.h>      // printf, fprintf
+#include <stdbool.h>    // bool
+#include <string.h>     // strcpy, strcmp
+#include <stdint.h>     // int64_t
 
 #define NAME_LEN 50
 
