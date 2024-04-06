@@ -2,7 +2,7 @@
 EXECUTE THE FOLLOWING IN LINUX SHELL TO RUN:
 
 [ typing "run" + ENTER on the terminal will compile and run ]
-alias run="gcc -Wall -Wextra --pedantic -g -o main && ./main"
+alias run="gcc -Wall -Wextra --pedantic -g -o main main.c && ./main"
 
 [ typing "debug" + ENTER will debug with valgrind (must have installed) ]
-alias debug="valgrind --leak-check=full ./main"
+alias debug="valgrind --leak-check=full --show-leak-kinds=all -s ./main"

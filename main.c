@@ -18,7 +18,6 @@ typedef struct {
 } arraylist;
 
 
-
 contact* new_contact(int id, char* name);
 void free_contact(contact* c);
 
@@ -69,6 +68,8 @@ int main() {
     printf("Searching for 'nonexistent_name' returns: %ld\n", search(&list, "nonexistent_name"));
 
     free_arraylist(&list);  
+
+    return 0;
 }
 
 
@@ -118,7 +119,7 @@ bool push(arraylist* list, contact* c) {
         list->arr = (contact**) realloc(list->arr, sizeof(contact) * newsize);
         check_null_ptr(list->arr, "push", "realloc");
         list->size = newsize;
-        printf("[realloc: list->arr copied into new dynamic array of double the size\n");
+        printf("[realloc: list->arr copied into new dynamic array of double the size]\n");
     }
 
     list->arr[list->idx++] = c;
@@ -145,9 +146,7 @@ bool remove_idx(arraylist* list, size_t idx) {
     if (list->idx < idx) {
         printf("remove from arraylist: index %ld out of bounds\n", idx);
         return false;
-    } 
-
-    if (idx == list->idx) {
+    } else if (list->idx == idx) {
         pop(list);
         return true;
     }
@@ -159,17 +158,15 @@ bool remove_idx(arraylist* list, size_t idx) {
     size_t buff_idx = 0, arr_idx = 0;
     while (arr_idx < list->idx) {
         if (arr_idx == idx) {
-            arr_idx++;
+            arr_idx++; 
             continue;
         }
-        buff[buff_idx] = list->arr[arr_idx];
-        arr_idx++;
-        buff_idx++;
+        buff[buff_idx++] = list->arr[arr_idx++];
     }
 
     free_contact(list->arr[idx]);   
-    free(list->arr);        // free the dynamic array of pointers 
-    list->arr = buff;       // assign buff to list->arr
+    free(list->arr);        
+    list->arr = buff;
     list->idx--;
     
     return true;
