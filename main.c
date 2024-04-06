@@ -62,7 +62,7 @@ int main() {
     printf("Searching for 'you' (nohomo) returns: %d\n", search(&list, "you"));
     printf("Searching for 'nonexistent_name' returns: %d\n", search(&list, "nonexistent_name"));
 
-    free_arraylist(&list);  // DONT FROGGET TO FROG THE LIST!
+    free_arraylist(&list);  
 }
 
 
