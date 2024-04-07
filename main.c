@@ -68,7 +68,6 @@ int main() {
     printf("Searching for 'nonexistent_name' returns: %ld\n", search(&list, "nonexistent_name"));
 
     free_arraylist(&list);  
-
     return 0;
 }
 
